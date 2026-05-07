@@ -1,0 +1,34 @@
+body {
+  margin: 0;
+  overflow: hidden;
+  background: radial-gradient(circle at center, #1a1a1a, #0d0d0d);
+}
+
+/* main pet container */
+#ghost-container {
+  position: absolute;
+  width: 120px;
+  height: 120px;
+  cursor: grab;
+  user-select: none;
+}
+
+/* ghost sprite */
+#ghost {
+  width: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+}
+
+/* hat layer */
+#hat {
+  width: 70px;
+  position: absolute;
+  top: -25px;
+  left: 25px;
+  pointer-events: none;
+  transition: transform 0.08s linear;
+  filter: drop-shadow(0 2px 2px rgba(0,0,0,0.4));
+}
