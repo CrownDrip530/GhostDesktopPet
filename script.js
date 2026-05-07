@@ -4,7 +4,7 @@ const eyes = document.getElementById("eyes");
 const pop = document.getElementById("pop");
 
 /* ======================
-   GHOST PHYSICS
+   POSITION + PHYSICS
 ====================== */
 let x = 200;
 let y = 200;
@@ -12,34 +12,57 @@ let y = 200;
 let vx = 0;
 let vy = 0;
 
-let t = 0;
-let idleTime = 0;
-let state = "idle";
+/* ======================
+   MOUSE + MODES
+====================== */
+let mouseX = x;
+let mouseY = y;
+let lastMoveTime = Date.now();
+let mode = "idle";
 
 /* ======================
-   HAT PHYSICS (SPRING)
+   HAT SPRING PHYSICS
 ====================== */
-// hat position offset
 let hatX = 0;
 let hatY = 0;
-
-// hat velocity (spring movement)
 let hatVX = 0;
 let hatVY = 0;
 
 /* ======================
-   DRAG STATE
+   STATE
 ====================== */
 let dragging = false;
 let offsetX = 0;
 let offsetY = 0;
 
+let t = 0;
+
 /* ======================
-   BLINK SYSTEM
+   MOUSE TRACKING
+====================== */
+document.addEventListener("mousemove", (e) => {
+  mouseX = e.clientX;
+  mouseY = e.clientY;
+  lastMoveTime = Date.now();
+
+  if (dragging) {
+    x = e.clientX - offsetX;
+    y = e.clientY - offsetY;
+
+    vx = e.movementX;
+    vy = e.movementY;
+
+    hatVX += vx * 0.05;
+    hatVY += vy * 0.05;
+  }
+});
+
+/* ======================
+   BLINKING
 ====================== */
 function blink() {
   eyes.style.opacity = "0";
-  setTimeout(() => eyes.style.opacity = "1", 150);
+  setTimeout(() => eyes.style.opacity = "1", 120);
 }
 
 setInterval(() => {
@@ -47,38 +70,64 @@ setInterval(() => {
 }, 2000);
 
 /* ======================
+   ATTENTION BURST
+====================== */
+function attentionBurst() {
+  vx += (Math.random() - 0.5) * 10;
+  vy -= Math.random() * 6;
+}
+
+setInterval(() => {
+  if (mode === "attention" && !dragging) {
+    attentionBurst();
+  }
+}, 1200);
+
+/* ======================
    MAIN LOOP
 ====================== */
 function animate() {
   t += 0.02;
-  idleTime++;
+
+  let idleTime = Date.now() - lastMoveTime;
+
+  /* ======================
+     MODE SYSTEM
+  ====================== */
+  if (idleTime < 2000) {
+    mode = "chase";
+  } else if (idleTime < 6000) {
+    mode = "idle";
+  } else {
+    mode = "attention";
+  }
 
   /* ======================
      AI BEHAVIOR
   ====================== */
   if (!dragging) {
 
-    if (idleTime > 300) {
-      const r = Math.random();
-      state = r < 0.5 ? "idle" : r < 0.8 ? "wander" : "sleep";
-      idleTime = 0;
-    }
-
-    if (state === "wander") {
-      vx += (Math.random() - 0.5) * 0.3;
-      vy += (Math.random() - 0.5) * 0.3;
-    }
-
-    if (state === "sleep") {
-      vx *= 0.9;
-      vy *= 0.9;
-      eyes.innerHTML = "— —";
-    } else {
+    if (mode === "chase") {
+      vx += (mouseX - x) * 0.002;
+      vy += (mouseY - y) * 0.002;
       eyes.innerHTML = "• •";
     }
 
-    // floating motion
-    vy += Math.sin(t) * 0.15;
+    if (mode === "attention") {
+      vx += (Math.random() - 0.5) * 0.5;
+      vy += (Math.random() - 0.5) * 0.5;
+      eyes.innerHTML = "!! !!";
+    }
+
+    if (mode === "idle") {
+      vx += Math.sin(t) * 0.1;
+      vy += Math.cos(t) * 0.1;
+      eyes.innerHTML = "• •";
+    }
+
+    if (idleTime > 10000) {
+      eyes.innerHTML = "— —"; // sleep
+    }
 
     x += vx;
     y += vy;
@@ -100,23 +149,19 @@ function animate() {
   if (y > maxY) { y = maxY; vy *= -0.6; }
 
   /* ======================
-     APPLY GHOST POSITION
+     APPLY POSITION
   ====================== */
   ghost.style.left = x + "px";
   ghost.style.top = y + "px";
 
   /* ======================
-     🎩 HAT SPRING PHYSICS
-     (this is the magic)
+     HAT SPRING PHYSICS
   ====================== */
-
-  // target = ghost movement + slight wobble
   let targetX = Math.sin(t * 2) * 2;
   let targetY = Math.cos(t * 2) * 2;
 
-  // spring force (follow target)
-  let stiffness = 0.15;   // pull strength
-  let damping = 0.75;     // resistance
+  const stiffness = 0.15;
+  const damping = 0.75;
 
   hatVX += (targetX - hatX) * stiffness;
   hatVY += (targetY - hatY) * stiffness;
@@ -150,22 +195,8 @@ document.addEventListener("mouseup", () => {
   ghost.style.cursor = "grab";
 });
 
-document.addEventListener("mousemove", (e) => {
-  if (dragging) {
-    x = e.clientX - offsetX;
-    y = e.clientY - offsetY;
-
-    vx = e.movementX;
-    vy = e.movementY;
-
-    // hat reacts to dragging (little lag spike)
-    hatVX += vx * 0.05;
-    hatVY += vy * 0.05;
-  }
-});
-
 /* ======================
-   SOUND REACTION
+   SOUND + CLICK
 ====================== */
 ghost.addEventListener("click", () => {
   pop.currentTime = 0;
