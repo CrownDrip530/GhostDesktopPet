@@ -4,7 +4,6 @@ body {
   background: radial-gradient(circle at center, #1a1a1a, #0d0d0d);
 }
 
-/* main pet container */
 #ghost-container {
   position: absolute;
   width: 120px;
@@ -13,7 +12,6 @@ body {
   user-select: none;
 }
 
-/* ghost sprite */
 #ghost {
   width: 100%;
   position: absolute;
@@ -22,13 +20,20 @@ body {
   pointer-events: none;
 }
 
-/* hat layer */
 #hat {
   width: 70px;
   position: absolute;
   top: -25px;
   left: 25px;
   pointer-events: none;
-  transition: transform 0.08s linear;
   filter: drop-shadow(0 2px 2px rgba(0,0,0,0.4));
+}
+
+#eyes {
+  position: absolute;
+  top: 40px;
+  left: 35px;
+  font-size: 18px;
+  color: black;
+  pointer-events: none;
 }
